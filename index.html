@@ -155,9 +155,14 @@
     <!-- Services Section -->
     <section class="services" id="services">
       <div class="heading">
-        <h2>TodoApp</h2>
-        <span>MyTodoList</span>
-      </div>
+        <h2>Unique Application</h2>
+        <span>MyApp</span>
+        <div id="app">
+        <h1>Random Location Generator</h1>
+    <div id="location"></div>
+    <button id="generateBtn" onclick="generateLocation()">Generate Location</button>
+      
+  </div>
       <div class="services-container">
         <!-- Add your todoapp content here -->
       </div>
@@ -166,22 +171,24 @@
     <!-- Contact Section -->
     <section class="contact" id="contact">
       <div class="heading">
-        <h2>Unique App</h2>
+        <h2>Todo Application</h2>
         <span>ToDo App</span>
         <br>
 
         <br>
-        <input type="text" id="taskInput" placeholder="Add a new task">
-        <button onclick="addTask()">Add</button>
-        <button onclick="deleteTask()">Delete</button>
-        <button onclick="doneTask()">Done</button>
-        <ul id="todo-list"></ul>
-      
-        <div>
-          <button onclick="retrieveTasks()">Retrieve</button>
-          <button onclick="clearAllTasks()">Clear All</button>
-          <input type="text" id="searchInput" placeholder="Search tasks" oninput="searchTasks()">
-        </div>
+        <div id="app">
+          <h1>To-Do App</h1>
+          <div>
+              <input type="text" id="taskInput" placeholder="Add a new task">
+              <button onclick="addTask()">Add</button>
+          </div>
+          <ul id="taskList"></ul>
+          <div>
+              <button onclick="deleteSelected()">Delete</button>
+              <button onclick="markDone()">Done</button>
+              <button onclick="clearAll()">Clear All</button>
+              <input type="text" id="searchInput" oninput="searchTasks()" placeholder="Search tasks">
+          </div>
       </div>
       <div class="contact-container">
         <!-- Add your work experience here information here -->
@@ -201,81 +208,110 @@
     </section>
     <div class="copyright">©Soriful Chalehin. All Right Reserved.</div>
     <script>
-       function addTask() {
-      var taskInput = document.getElementById('taskInput');
-      var taskText = taskInput.value.trim();
+      function generateLocation() {
+            fetch('https://randomuser.me/api/')
+                .then(response => response.json())
+                .then(data => {
+                    const user = data.results[0];
+                    const location = `${user.location.city}, ${user.location.state}, ${user.location.country}`;
+                    document.getElementById('location').textContent = location;
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
 
-      if (taskText !== '') {
-        var todoList = document.getElementById('todo-list');
-        var newTask = document.createElement('li');
-        newTask.textContent = taskText;
-        newTask.onclick = function() {
-          toggleCompleted(this);
-        };
-        todoList.appendChild(newTask);
+      let tasks = [];
+
+function renderTasks() {
+    const taskList = document.getElementById('taskList');
+    taskList.innerHTML = '';
+
+    tasks.forEach((task, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span>${task.name}</span>
+            <input type="checkbox" onclick="toggleDone(${index})">
+        `;
+        if (task.done) {
+            li.classList.add('done');
+        }
+        taskList.appendChild(li);
+    });
+}
+
+function addTask() {
+    const taskInput = document.getElementById('taskInput');
+    const task = taskInput.value.trim();
+    if (task !== '') {
+        tasks.push({ name: task, done: false });
         taskInput.value = '';
-      }
+        renderTasks();
     }
+}
 
-    function toggleCompleted(task) {
-      task.classList.toggle('completed');
-    }
+function toggleDone(index) {
+    tasks[index].done = !tasks[index].done;
+    renderTasks();
+}
 
-    function retrieveTasks() {
-      // You can implement retrieval logic here based on your storage mechanism.
-      // For simplicity, let's just log the tasks to the console.
-      var tasks = document.querySelectorAll('#todo-list li');
-      tasks.forEach(function(task) {
-        console.log(task.textContent);
-      });
-    }
+function deleteSelected() {
+    tasks = tasks.filter(task => !task.done);
+    renderTasks();
+}
 
-    function clearAllTasks() {
-      var todoList = document.getElementById('todo-list');
-      todoList.innerHTML = '';
-    }
-
-    function searchTasks() {
-      var searchInput = document.getElementById('searchInput');
-      var searchTerm = searchInput.value.toLowerCase();
-      var tasks = document.querySelectorAll('#todo-list li');
-
-      tasks.forEach(function(task) {
-        var taskText = task.textContent.toLowerCase();
-        if (taskText.includes(searchTerm)) {
-          task.style.display = 'block';
-        } else {
-          task.style.display = 'none';
+function markDone() {
+    tasks.forEach(task => {
+        if (task.done) {
+            task.done = false;
         }
-      });
-    } 
-      let header = document.querySelector("header");
-      let menu = document.querySelector("#menu-icon");
-      let navbar = document.querySelector(".navbar");
+    });
+    renderTasks();
+}
 
-      window.addEventListener("scroll", () => {
-        header.classList.toggle("shadow", window.scrollY > 0);
-      });
+function clearAll() {
+    tasks = [];
+    renderTasks();
+}
 
-      menu.onclick = () => {
-        navbar.classList.toggle("active");
-      };
-      window.onscroll = () => {
-        navbar.classList.remove("active");
-      };
+function searchTasks() {
+    const searchInput = document.getElementById('searchInput');
+    const searchTerm = searchInput.value.toLowerCase();
 
-      // Dark Mode / light mode
-      let darkmode = document.querySelector("#darkmode");
+    const filteredTasks = tasks.filter(task => task.name.toLowerCase().includes(searchTerm));
+    renderTasks(filteredTasks);
+}
 
-      darkmode.onclick = () => {
-        if (darkmode.classList.contains("bx-moon")) {
-          darkmode.classList.replace("bx-moon", "bx-sun");
-          document.body.classList.add("active");
-        } else {
-          darkmode.classList.replace("bx-sun", "bx-moon");
-          document.body.classList.remove("active");
-        }
-      };
+// Initial rendering
+renderTasks();
+
+// Additional code for header, menu, and dark mode
+let header = document.querySelector("header");
+let menu = document.querySelector("#menu-icon");
+let navbar = document.querySelector(".navbar");
+
+window.addEventListener("scroll", () => {
+    header.classList.toggle("shadow", window.scrollY > 0);
+});
+
+menu.onclick = () => {
+    navbar.classList.toggle("active");
+};
+window.onscroll = () => {
+    navbar.classList.remove("active");
+};
+
+// Dark Mode / light mode
+let darkmode = document.querySelector("#darkmode");
+
+darkmode.onclick = () => {
+    if (darkmode.classList.contains("bx-moon")) {
+        darkmode.classList.replace("bx-moon", "bx-sun");
+        document.body.classList.add("active");
+    } else {
+        darkmode.classList.replace("bx-sun", "bx-moon");
+        document.body.classList.remove("active");
+    }
+};
+    
     </script>
   </body>
 </html>
